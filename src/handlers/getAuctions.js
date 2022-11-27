@@ -1,23 +1,20 @@
-import AWS from 'aws-sdk';
 import createError from 'http-errors';
 import commonMiddleware from '../lib/commonMiddleware';
-
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+import { getAuctionsByStatus } from '../lib/getAuctionsByStatus';
 
 async function getAuctions(event, context) {
-  let auctions;
+  const { status } = event.queryStringParameters;
 
   try {
-    const result = await dynamodb.scan({ TableName: process.env.AUCTIONS_TABLE_NAME }).promise();
-    auctions = result.Items;
-  } catch (error) {
-    console.error(error);
-    throw new createError.InternalServerError(error);
-  }
+    const auctions = await getAuctionsByStatus(status);
     return {
       statusCode: 200,
       body: JSON.stringify(auctions),
     };
+  } catch (error) {
+    console.error(error);
+    throw new createError.InternalServerError(error);
+  }
 }
 
 export const handler = commonMiddleware(getAuctions);
